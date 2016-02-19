@@ -15,12 +15,10 @@ import org.scribe.oauth.OAuthService;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import java.sql.Connection;
-import static java.sql.DriverManager.getConnection;
-import static java.sql.DriverManager.getConnection;
-import static java.sql.DriverManager.getConnection;
-import static java.sql.DriverManager.getConnection;
+
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Code sample for accessing the Yelp API V2.
@@ -36,11 +34,12 @@ import java.sql.SQLException;
 public class YelpAPI {
 
   private static final String API_HOST = "api.yelp.com";
-  private static final String DEFAULT_TERM = "dinner";
-  private static final String DEFAULT_LOCATION = "Sarnia Ontario CA";
+  private static final String DEFAULT_TERM = "restaurant";
+  private static final String DEFAULT_LOCATION = "Sarnia";
   private static final int SEARCH_LIMIT =20;
   private static final String SEARCH_PATH = "/v2/search";
   private static final String BUSINESS_PATH = "/v2/business";
+  //private static final int OFFSET=1;
 
   /*
    * Update OAuth credentials below from the Yelp Developers API site:
@@ -50,6 +49,8 @@ public class YelpAPI {
   private static final String CONSUMER_SECRET = "u18VhfQr9ItEgJ4R1hcT3y35Eto";
   private static final String TOKEN = "TeW6HS2YsAVHLs3pC_jEWG5XvgX0TkSB";
   private static final String TOKEN_SECRET = "baYozpg5tw5FoA4WWYQywzG8s54";
+  private static List<Restaurant> searchedInfo= new ArrayList();
+  
 
   OAuthService service;
   Token accessToken;
@@ -79,11 +80,14 @@ public class YelpAPI {
    * @param location <tt>String</tt> of the location
    * @return <tt>String</tt> JSON Response
    */
-  public String searchForBusinessesByLocation(String term, String location) {
+  public String searchForBusinessesByLocation(String term, String location, int OFFSET) {
     OAuthRequest request = createOAuthRequest(SEARCH_PATH);
     request.addQuerystringParameter("term", term);
     request.addQuerystringParameter("location", location);
     request.addQuerystringParameter("limit", String.valueOf(SEARCH_LIMIT));
+    request.addQuerystringParameter("offset",String.valueOf(OFFSET));
+    request.addQuerystringParameter("sort", "0");
+    
     return sendRequestAndGetResponse(request);
   }
 
@@ -132,80 +136,75 @@ public class YelpAPI {
    * @param yelpApi <tt>YelpAPI</tt> service instance
    * @param yelpApiCli <tt>YelpAPICLI</tt> command line arguments
    */
-  private static void queryAPI(YelpAPI yelpApi, YelpAPICLI yelpApiCli) throws SQLException {
-    String searchResponseJSON =
-        yelpApi.searchForBusinessesByLocation(yelpApiCli.term, yelpApiCli.location);
-
-    JSONParser parser = new JSONParser();
-    JSONObject response = null;
-    try {
-      response = (JSONObject) parser.parse(searchResponseJSON);
-    } catch (ParseException e) {
-      System.out.println("Error: could not parse JSON response:");
-      System.out.println(searchResponseJSON);
-      System.exit(1);
-    }
+  private static void queryAPI(YelpAPI yelpApi, YelpAPICLI yelpApiCli, int totalPages) throws SQLException {
     
-    JSONArray businesses = (JSONArray) response.get("businesses");
-    
-    /* The below part is written by Lee */
-    
-    int numRows=businesses.size();
-    
-    String[][] data = new String[numRows][11];
-    
-    for (int i=0;i<numRows;i++)
+    for (int offset=0; offset<totalPages ; offset++)  
     {
-        JSONObject fb = (JSONObject) businesses.get(i);
-        String NAME = fb.get("name").toString();  
-        JSONArray category = (JSONArray)fb.get("categories");
-        JSONArray menu = (JSONArray)category.get(0);
+        String searchResponseJSON =
+            yelpApi.searchForBusinessesByLocation(yelpApiCli.term, yelpApiCli.location, offset);
 
-        String MENU = menu.get(0).toString();
-        
-        JSONObject location =(JSONObject)fb.get("location");
-        JSONArray address= (JSONArray)location.get("display_address");
-        
-        String PHONE = fb.get("display_phone").toString();
-      
-        String ADDRESS=""; 
-        
-        String MOBILE_URL = fb.get("mobile_url").toString();
-        String URL = fb.get("url").toString();
-        String RATING = fb.get("rating").toString();
-        String RATING_IMAGE_URL =fb.get("rating_img_url").toString();
-        String SNIPPET_TEXT=fb.get("snippet_text").toString().replace("\n","");
-                
-        
-        for (int j=0;j<address.size();j++)
-            ADDRESS+=address.get(j).toString()+", ";
-        
-        ADDRESS=ADDRESS.substring(0, ADDRESS.length()-2);
-        
-        String POSTAL_CODE=location.get("postal_code").toString();  //POSTAL CODE
-             
-        JSONObject position = (JSONObject)location.get("coordinate");
-        
-        String LATITUDE = position.get("latitude").toString();
-        String LONGITUDE = position.get("longitude").toString();
-        
-        data[i][0]=NAME;
-        data[i][1]=MENU;
-        data[i][2]=PHONE;
-        data[i][3]=ADDRESS;
-        data[i][4]=POSTAL_CODE;
-        data[i][5]=LATITUDE; //This data will be converted to Double type when being inserted to the MySQL db 
-        data[i][6]=LONGITUDE; //This data will be converted to Double type when being inserted to the MySQL db
-        data[i][7]=MOBILE_URL;
-        data[i][8]=RATING;
-        data[i][9]=RATING_IMAGE_URL;
-        data[i][10]=SNIPPET_TEXT;
-  }  
-    
-    DBconnection toMySQL=new DBconnection();
+        JSONParser parser = new JSONParser();
+        JSONObject response = null;
 
-    toMySQL.createTable();
-    toMySQL.insertData(data);
+        try {
+          response = (JSONObject) parser.parse(searchResponseJSON);
+        } catch (ParseException e) {
+          System.out.println("Error: could not parse JSON response:");
+          System.out.println(searchResponseJSON);
+          System.exit(1);
+        }
+
+        JSONArray businesses = (JSONArray) response.get("businesses");
+
+        for (Object businesse : businesses) 
+        {
+            JSONObject fb = (JSONObject) businesse;
+            String NAME = fb.get("name").toString();  
+            
+            JSONArray category = (JSONArray)fb.get("categories");
+            JSONArray menu = (JSONArray)category.get(0);
+            String MENU = menu.get(0).toString();
+           
+            JSONObject location =(JSONObject)fb.get("location");
+            JSONArray address= (JSONArray)location.get("display_address");
+            
+            String PHONE = fb.get("display_phone").toString();
+            String ADDRESS="";
+            String MOBILE_URL = fb.get("mobile_url").toString();
+            //String URL = fb.get("url").toString();
+            String RATING = fb.get("rating").toString();
+            String RATING_IMAGE_URL =fb.get("rating_img_url").toString();
+            String SNIPPET_TEXT=fb.get("snippet_text").toString().replace("\n","");
+           
+            for (Object str : address) {
+                ADDRESS += str.toString() + ", ";
+            }
+            ADDRESS=ADDRESS.substring(0, ADDRESS.length()-2);
+            
+            String POSTAL_CODE=location.get("postal_code").toString();  
+            String COUNTRY_CODE=location.get("country_code").toString();
+            JSONObject position = (JSONObject)location.get("coordinate");
+            String LATITUDE = position.get("latitude").toString();
+            String LONGITUDE = position.get("longitude").toString();
+            
+            Restaurant bistro = new Restaurant();
+            
+            bistro.setNAME(NAME);
+            bistro.setMENU(MENU);
+            bistro.setPHONE(PHONE);
+            bistro.setADDRESS(ADDRESS);
+            bistro.setPOSTAL_CODE(POSTAL_CODE);
+            bistro.setCOUNTRY_CODE(COUNTRY_CODE);
+            bistro.setLATITUDE(Double.parseDouble(LATITUDE));
+            bistro.setLONGITUDE(Double.parseDouble(LONGITUDE));
+            bistro.setMOBILE_URL(MOBILE_URL);
+            bistro.setRATING(RATING);
+            bistro.setRATING_IMAGE_URL(RATING_IMAGE_URL);
+            bistro.setSNIPPET_TEXT(SNIPPET_TEXT);
+            
+            searchedInfo.add(bistro);
+        }  
+    }
 }
 
   /**
@@ -229,7 +228,13 @@ public class YelpAPI {
     new JCommander(yelpApiCli, args);
 
     YelpAPI yelpApi = new YelpAPI(CONSUMER_KEY, CONSUMER_SECRET, TOKEN, TOKEN_SECRET);
-    queryAPI(yelpApi, yelpApiCli);
+    
+    int numOfPages=30;// 20 restaurants per a page. 
+    
+    queryAPI(yelpApi, yelpApiCli, numOfPages);
+    
+    DBconnection DB=new DBconnection();
+    DB.createTable();
+    DB.insertData(searchedInfo);
   }
 }
-

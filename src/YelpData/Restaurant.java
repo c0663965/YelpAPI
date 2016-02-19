@@ -7,6 +7,7 @@ public class Restaurant {
     private String PHONE;
     private String ADDRESS;
     private String POSTAL_CODE;
+    private String COUNTRY_CODE;
     private double LATITUDE;
     private double LONGITUDE;
     private String MOBILE_URL;
@@ -20,6 +21,7 @@ public class Restaurant {
         PHONE="";
         ADDRESS="";
         POSTAL_CODE="";
+        COUNTRY_CODE="";
         LATITUDE=0.0;
         LONGITUDE=0.0;
         MOBILE_URL="";
@@ -66,6 +68,14 @@ public class Restaurant {
 
     public void setPOSTAL_CODE(String POSTAL_CODE) {
         this.POSTAL_CODE = POSTAL_CODE;
+    }
+    
+    public String getCOUNTRY_CODE() {
+        return COUNTRY_CODE;
+    }
+
+    public void setCOUNTRY_CODE(String COUNTRY_CODE) {
+        this.COUNTRY_CODE = COUNTRY_CODE;
     }
 
     public double getLATITUDE() {
