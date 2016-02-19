@@ -27,8 +27,6 @@ public class Restaurant {
         RATING_IMAGE_URL="";
         SNIPPET_TEXT="";
     }
-    
-    
 
     public String getNAME() {
         return NAME;
