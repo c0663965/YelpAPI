@@ -15,10 +15,24 @@ import org.scribe.oauth.OAuthService;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.file.Files;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  * Code sample for accessing the Yelp API V2.
@@ -50,6 +64,8 @@ public class YelpAPI {
   private static final String TOKEN = "TeW6HS2YsAVHLs3pC_jEWG5XvgX0TkSB";
   private static final String TOKEN_SECRET = "baYozpg5tw5FoA4WWYQywzG8s54";
   private static List<Restaurant> searchedInfo= new ArrayList();
+  private static final String folderPath = "F:/JavaApplication6/images/";
+
   
 
   OAuthService service;
@@ -155,10 +171,12 @@ public class YelpAPI {
         }
 
         JSONArray businesses = (JSONArray) response.get("businesses");
-
-        for (Object businesse : businesses) 
+                
+        clearFolder();
+        
+        for (int i=0; i<businesses.size();i++) 
         {
-            JSONObject fb = (JSONObject) businesse;
+            JSONObject fb = (JSONObject) businesses.get(i);
             String NAME = fb.get("name").toString();  
             
             JSONArray category = (JSONArray)fb.get("categories");
@@ -198,6 +216,27 @@ public class YelpAPI {
             bistro.setLATITUDE(Double.parseDouble(LATITUDE));
             bistro.setLONGITUDE(Double.parseDouble(LONGITUDE));
             bistro.setMOBILE_URL(MOBILE_URL);
+            
+            try {
+                Document doc = Jsoup.connect(MOBILE_URL).get();
+                Elements img = doc.getElementsByClass("photo-box-img").eq(0);
+                
+                
+//                for (Element el : img)
+//                { 
+//                    String src = el.absUrl("src"); 
+//                    System.out.println("Image Found!"); 
+//                    System.out.println("src attribute is : "+src); 
+                
+                String src=img.attr("src");
+                String name=(i+1)+".jpg";
+                getImages(src,name); 
+                //} 
+
+            } catch (IOException ex) {
+                Logger.getLogger(YelpAPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
             bistro.setRATING(RATING);
             bistro.setRATING_IMAGE_URL(RATING_IMAGE_URL);
             bistro.setSNIPPET_TEXT(SNIPPET_TEXT);
@@ -206,7 +245,56 @@ public class YelpAPI {
         }  
     }
 }
+  
+  private static void getImages(String src, String name) throws IOException {
 
+//      http://examples.javacodegeeks.com/enterprise-java/html/download-images-from-a-website-using-jsoup/
+//      Exctract the name of the image from the src attribute
+//        
+//        int indexname = src.lastIndexOf("/"); //The index number
+//        
+//        if (indexname == src.length()) 
+//        {
+//            src = src.substring(1, indexname);
+//        }
+//        
+//        
+//        indexname = src.lastIndexOf("/");
+//        String name = src.substring(indexname, src.length());
+//        System.out.println(name);
+//        Open a URL Stream
+        
+        URL url = new URL(src);
+        
+        InputStream in = url.openStream();
+        OutputStream out = new BufferedOutputStream(new FileOutputStream(folderPath+name));
+        
+        for (int b; (b = in.read()) != -1;) 
+            out.write(b);
+        
+        out.close();
+        
+        in.close();
+    }
+
+    private static void clearFolder(){
+        
+      File file = new File(folderPath);      
+
+      String[] myFiles;    
+
+      if(file.isDirectory())
+      {
+          myFiles = file.list();
+
+          for (int i=0; i<myFiles.length; i++) 
+          {
+              File myFile = new File(file, myFiles[i]); 
+              myFile.delete();
+          }
+      }
+    }
+  
   /**
    * Command-line interface for the sample Yelp API runner.
    */
@@ -222,15 +310,17 @@ public class YelpAPI {
    * Main entry for sample Yelp API requests.
    * <p>
    * After entering your OAuth credentials, execute <tt><b>run.sh</b></tt> to run this example.
+     * @param args
+     * @throws java.sql.SQLException
    */
   public static void main(String[] args) throws SQLException {
+ 
     YelpAPICLI yelpApiCli = new YelpAPICLI();
-    new JCommander(yelpApiCli, args);
+    //new JCommander(yelpApiCli, args);
 
     YelpAPI yelpApi = new YelpAPI(CONSUMER_KEY, CONSUMER_SECRET, TOKEN, TOKEN_SECRET);
     
-    int numOfPages=30;// 20 restaurants per a page. 
-    
+    int numOfPages=1;// 20 restaurants per a page. 
     queryAPI(yelpApi, yelpApiCli, numOfPages);
     
     DBconnection DB=new DBconnection();
