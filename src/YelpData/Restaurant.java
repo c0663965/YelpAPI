@@ -4,6 +4,7 @@ public class Restaurant {
     
     private String NAME;
     private String MENU;
+    private String PRICE;
     private String PHONE;
     private String ADDRESS;
     private String POSTAL_CODE;
@@ -18,6 +19,7 @@ public class Restaurant {
     public Restaurant() {
         NAME="";
         MENU="";
+        PRICE="";
         PHONE="";
         ADDRESS="";
         POSTAL_CODE="";
@@ -28,6 +30,14 @@ public class Restaurant {
         RATING="";
         RATING_IMAGE_URL="";
         SNIPPET_TEXT="";
+    }
+
+    public String getPRICE() {
+        return PRICE;
+    }
+
+    public void setPRICE(String PRICE) {
+        this.PRICE = PRICE;
     }
 
     public String getNAME() {

@@ -54,6 +54,7 @@ public class DBconnection {
                     + "(ID INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,"
                     + "NAME VARCHAR(50),"
                     + "MENU VARCHAR(50),"
+                    + "PRICE VARCHAR(20),"
                     + "PHONE VARCHAR(20),"
                     + "ADDRESS VARCHAR(100),"
                     + "POSTAL_CODE VARCHAR(20),"
@@ -79,8 +80,10 @@ public class DBconnection {
             Connection connection = getConnection();
 
             String sql = "insert into " + db + "." + table
-                    + " (NAME,MENU,PHONE,ADDRESS,POSTAL_CODE,COUNTRY_CODE,LATITUDE,LONGITUDE,MOBILE_URL,RATING,RATING_IMAGE_URL,SNIPPET_TEXT)"
-                    + " values(?,?,?,?,?,?,?,?,?,?,?,?);";
+                       + " (NAME,MENU,PRICE,PHONE,ADDRESS,POSTAL_CODE,COUNTRY_CODE,LATITUDE,LONGITUDE,"
+                       + " MOBILE_URL,RATING,RATING_IMAGE_URL,SNIPPET_TEXT)"
+                       + " values(?,?,?,?,?,?,?,?,?,?,?,?,?);";
+            
 
             PreparedStatement ps = connection.prepareStatement(sql);
 
@@ -90,16 +93,17 @@ public class DBconnection {
             {
                 ps.setString(1,data.get(i).getNAME());
                 ps.setString(2,data.get(i).getMENU());
-                ps.setString(3,data.get(i).getPHONE());
-                ps.setString(4,data.get(i).getADDRESS());
-                ps.setString(5,data.get(i).getPOSTAL_CODE());
-                ps.setString(6,data.get(i).getCOUNTRY_CODE());
-                ps.setDouble(7,data.get(i).getLATITUDE());
-                ps.setDouble(8,data.get(i).getLONGITUDE());
-                ps.setString(9,data.get(i).getMOBILE_URL());
-                ps.setString(10,data.get(i).getRATING());
-                ps.setString(11,data.get(i).getRATING_IMAGE_URL());
-                ps.setString(12,data.get(i).getSNIPPET_TEXT());
+                ps.setString(3,data.get(i).getPRICE());
+                ps.setString(4,data.get(i).getPHONE());
+                ps.setString(5,data.get(i).getADDRESS());
+                ps.setString(6,data.get(i).getPOSTAL_CODE());
+                ps.setString(7,data.get(i).getCOUNTRY_CODE());
+                ps.setDouble(8,data.get(i).getLATITUDE());
+                ps.setDouble(9,data.get(i).getLONGITUDE());
+                ps.setString(10,data.get(i).getMOBILE_URL());
+                ps.setString(11,data.get(i).getRATING());
+                ps.setString(12,data.get(i).getRATING_IMAGE_URL());
+                ps.setString(13,data.get(i).getSNIPPET_TEXT());
                 
                 ps.addBatch();
                 
