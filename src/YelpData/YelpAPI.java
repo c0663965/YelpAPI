@@ -50,7 +50,8 @@ public class YelpAPI {
     private static final String DEFAULT_LOCATION = "Sarnia";
     private static final String SEARCH_PATH = "/v2/search";
     private static final String BUSINESS_PATH = "/v2/business";
-    private static final int SEARCH_LIMIT = 20;
+    private static final int SEARCH_LIMIT =20;
+    private static final int PAGE =1 ;
     /*
      * Update OAuth credentials below from the Yelp Developers API site:
      * http://www.yelp.com/developers/getting_started/api_access
@@ -198,7 +199,10 @@ public class YelpAPI {
 
                     String PHONE;
                     if (fb.get("display_phone")!=null)  //A few bistros don't have reviews. 
+                    {
                         PHONE = fb.get("display_phone").toString();
+                        PHONE = PHONE.substring(3,PHONE.length());
+                    }
                     else
                         PHONE = "";
 
@@ -215,11 +219,9 @@ public class YelpAPI {
                     else
                         SNIPPET_TEXT = "";
 
-                    for (Object str : address) {
-                        ADDRESS += str.toString() + ", ";
-                    }
-                    ADDRESS = ADDRESS.substring(0, ADDRESS.length() - 2);
-                 
+                    for (int k=0;k<2;k++)
+                        ADDRESS+=address.get(k).toString();
+                    
                     String POSTAL_CODE;
 
                     if(location.get("postal_code")!=null)
@@ -325,7 +327,7 @@ public class YelpAPI {
 
         YelpAPI yelpApi = new YelpAPI(CONSUMER_KEY, CONSUMER_SECRET, TOKEN, TOKEN_SECRET);
 
-        int numOfPages = 3;// Displaying 20 restaurants per page. 
+        int numOfPages = PAGE;// Displaying 20 restaurants per page. 
        
         createFolderForImages();
         
